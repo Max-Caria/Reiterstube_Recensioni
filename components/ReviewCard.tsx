@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Review, ReplyTone, ReplyLanguage } from '../types';
+import { Review, ReplyTone, ReplyLanguage, BrandIdentity } from '../types';
 import { generateReviewReply } from '../services/geminiService';
-import { Star, MessageSquare, Copy, CheckCircle, RefreshCw, AlertCircle, SlidersHorizontal, Globe } from 'lucide-react';
+import { Star, MessageSquare, Copy, CheckCircle, RefreshCw, AlertCircle, SlidersHorizontal, Globe, Zap, Fingerprint } from 'lucide-react';
 
 interface ReviewCardProps {
   review: Review;
+  restaurantName: string;
+  brandIdentity?: BrandIdentity;
   onUpdateReview: (id: string, updates: Partial<Review>) => void;
+  onConsumeCredit: () => boolean; // Returns true if credit available
 }
 
-export const ReviewCard: React.FC<ReviewCardProps> = ({ review, onUpdateReview }) => {
+export const ReviewCard: React.FC<ReviewCardProps> = ({ review, restaurantName, brandIdentity, onUpdateReview, onConsumeCredit }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editedReply, setEditedReply] = useState(review.reply || '');
@@ -17,6 +20,12 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review, onUpdateReview }
   const [selectedLanguage, setSelectedLanguage] = useState<ReplyLanguage>('it');
 
   const handleGenerateReply = async () => {
+    // Check credits before calling API
+    if (!onConsumeCredit()) {
+      setError("Crediti esauriti per questo mese. Contatta l'amministrazione.");
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     try {
@@ -26,6 +35,8 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review, onUpdateReview }
         rating: review.rating,
         tone: selectedTone,
         language: selectedLanguage,
+        restaurantName: restaurantName,
+        brandIdentity: brandIdentity
       });
       setEditedReply(reply);
     } catch (err) {
@@ -156,19 +167,24 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review, onUpdateReview }
                 className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-white border border-red-200 text-red-800 hover:bg-red-50 hover:border-red-300 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm mt-2"
               >
                 <MessageSquare size={18} />
-                <span>Genera Risposta ({languageOptions.find(l => l.value === selectedLanguage)?.label})</span>
+                <span>Genera Risposta AI ({languageOptions.find(l => l.value === selectedLanguage)?.label})</span>
+                {brandIdentity && (
+                  <span className="text-emerald-500 ml-2" title="Brand Identity Active">
+                    <Fingerprint size={16} />
+                  </span>
+                )}
               </button>
             )}
 
             {isGenerating && (
                <div className="flex items-center space-x-2 text-red-600 animate-pulse py-2">
                  <RefreshCw size={18} className="animate-spin" />
-                 <span>Creazione risposta <strong>{selectedTone}</strong> in <strong>{selectedLanguage.toUpperCase()}</strong>...</span>
+                 <span>Creazione risposta per <strong>{restaurantName}</strong>...</span>
                </div>
             )}
 
             {error && (
-              <div className="flex items-center space-x-2 text-red-500 text-sm">
+              <div className="flex items-center space-x-2 text-red-500 text-sm bg-red-50 p-2 rounded">
                 <AlertCircle size={16} />
                 <span>{error}</span>
               </div>
@@ -180,12 +196,18 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review, onUpdateReview }
                   <div className="flex justify-between items-end mb-1">
                     <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">Bozza Risposta</label>
                     <div className="flex space-x-2">
+                      {brandIdentity && (
+                        <span className="text-[10px] px-2 py-0.5 bg-emerald-100 rounded-full text-emerald-700 flex items-center border border-emerald-200">
+                          <Fingerprint size={10} className="mr-1"/> Identity
+                        </span>
+                      )}
                       <span className="text-[10px] px-2 py-0.5 bg-slate-200 rounded-full text-slate-600">
                         {toneOptions.find(t => t.value === selectedTone)?.label}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 bg-blue-100 rounded-full text-blue-700 border border-blue-200">
-                        {languageOptions.find(l => l.value === selectedLanguage)?.label}
-                      </span>
+                      <div className="flex items-center text-[10px] px-2 py-0.5 bg-blue-100 rounded-full text-blue-700 border border-blue-200">
+                        <Zap size={10} className="mr-1 fill-blue-700" />
+                        <span>Credit Used</span>
+                      </div>
                     </div>
                   </div>
                   <textarea 
@@ -219,7 +241,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review, onUpdateReview }
                   <button
                     onClick={handleGenerateReply}
                     className="p-2 text-slate-400 hover:text-red-700 transition-colors"
-                    title="Rigenera con gli stessi parametri"
+                    title="Rigenera (Consumerà un altro credito)"
                   >
                     <RefreshCw size={18} />
                   </button>

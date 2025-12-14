@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ReviewSource } from '../types';
-import { PlusCircle, Sparkles, X, ArrowDown } from 'lucide-react';
+import { PlusCircle, Sparkles, X, ArrowDown, FileText } from 'lucide-react';
 import { parseRawReview } from '../services/geminiService';
 
 interface ManualEntryProps {
@@ -49,7 +49,7 @@ export const ManualEntry: React.FC<ManualEntryProps> = ({ onAddReview }) => {
       setSource(data.source);
       setShowSmartPaste(false); // Close smart paste area
     } catch (error) {
-      alert("Impossibile analizzare il testo automaticamente. Compila i campi manualmente.");
+      alert("Non sono riuscito a leggere il testo. Per favore, inserisci i dati a mano.");
     } finally {
       setIsParsing(false);
     }
@@ -63,9 +63,9 @@ export const ManualEntry: React.FC<ManualEntryProps> = ({ onAddReview }) => {
       >
         <h2 className="font-semibold text-slate-700 flex items-center">
           <PlusCircle className="mr-2 text-red-800" size={20} />
-          Inserimento Manuale / Importazione
+          Nuova Recensione da Rispondere
         </h2>
-        <span className="text-slate-400 text-sm">{isExpanded ? 'Chiudi' : 'Espandi'}</span>
+        <span className="text-slate-400 text-sm">{isExpanded ? 'Chiudi' : 'Apri'}</span>
       </div>
 
       {isExpanded && (
@@ -75,41 +75,42 @@ export const ManualEntry: React.FC<ManualEntryProps> = ({ onAddReview }) => {
              {!showSmartPaste ? (
                <button 
                  onClick={() => setShowSmartPaste(true)}
-                 className="w-full py-3 border-2 border-dashed border-red-200 bg-red-50/30 rounded-lg text-red-700 font-medium flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-colors"
+                 className="w-full py-4 border-2 border-dashed border-red-200 bg-red-50/30 rounded-lg text-red-800 font-medium flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-colors"
                >
-                 <Sparkles size={18} className="mr-2" />
-                 Incolla testo grezzo da TripAdvisor / TheFork (AI Magic)
+                 <Sparkles size={20} className="mr-2" />
+                 <span className="text-lg">Ho copiato un testo (TripAdvisor/Google)</span>
                </button>
              ) : (
                <div className="bg-red-50/50 p-4 rounded-lg border border-red-100 mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-bold text-red-800 uppercase tracking-wide flex items-center">
-                      <Sparkles size={12} className="mr-1" /> Importazione Intelligente
+                    <label className="text-sm font-bold text-red-800 flex items-center">
+                      <FileText size={16} className="mr-1" /> Incolla qui sotto tutto il testo
                     </label>
                     <button onClick={() => setShowSmartPaste(false)} className="text-slate-400 hover:text-slate-600">
-                      <X size={16} />
+                      <X size={20} />
                     </button>
                   </div>
                   <textarea 
-                    className="w-full p-3 border border-red-200 rounded-lg text-sm h-24 focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900 mb-2"
-                    placeholder="Incolla qui tutto il blocco della recensione (es: 'Mario Rossi 5 stelle ieri... Il cibo era ottimo...')"
+                    className="w-full p-3 border border-red-200 rounded-lg text-sm h-32 focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900 mb-2 placeholder:text-slate-400"
+                    placeholder="Esempio: Clicca col tasto destro e incolla qui tutto quello che hai copiato dalla recensione..."
                     value={rawInput}
                     onChange={(e) => setRawInput(e.target.value)}
                   />
                   <button 
                     onClick={handleSmartParse}
                     disabled={isParsing || !rawInput.trim()}
-                    className="w-full py-2 bg-red-700 hover:bg-red-800 disabled:bg-red-300 text-white rounded-md font-medium text-sm flex items-center justify-center transition-colors"
+                    className="w-full py-3 bg-red-700 hover:bg-red-800 disabled:bg-red-300 text-white rounded-lg font-bold text-md flex items-center justify-center transition-colors shadow-md"
                   >
                     {isParsing ? (
-                      <span>Analisi in corso...</span>
+                      <span>Sto leggendo...</span>
                     ) : (
                       <>
-                        <span>Estrai Dati e Compila Form</span>
-                        <ArrowDown size={14} className="ml-1" />
+                        <span>Analizza e Compila Automaticamente</span>
+                        <ArrowDown size={18} className="ml-2" />
                       </>
                     )}
                   </button>
+                  <p className="text-center text-xs text-slate-500 mt-2">Il sistema cercherà di capire da solo chi ha scritto la recensione, il voto e il testo.</p>
                </div>
              )}
           </div>
@@ -121,52 +122,52 @@ export const ManualEntry: React.FC<ManualEntryProps> = ({ onAddReview }) => {
                 <input 
                   type="text" 
                   required
-                  className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
-                  placeholder="Mario Rossi"
+                  className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
+                  placeholder="Es. Mario Rossi"
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Fonte</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Dove l'ha scritta?</label>
                 <select 
-                  className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
+                  className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
                   value={source}
                   onChange={(e) => setSource(e.target.value as ReviewSource)}
                 >
                   <option value="Manual">Manuale / Altro</option>
                   <option value="TripAdvisor">TripAdvisor</option>
                   <option value="TheFork">TheFork</option>
-                  <option value="Google">Google</option>
+                  <option value="Google">Google Maps</option>
                 </select>
               </div>
             </div>
 
             <div className="mb-4">
-               <label className="block text-sm font-medium text-slate-700 mb-1">Valutazione (Stelle)</label>
+               <label className="block text-sm font-medium text-slate-700 mb-1">Quante stelle ha messo?</label>
                <div className="flex space-x-4">
                  {[1, 2, 3, 4, 5].map((star) => (
-                   <label key={star} className="flex items-center cursor-pointer">
+                   <label key={star} className="flex items-center cursor-pointer p-2 hover:bg-slate-50 rounded-lg transition-colors">
                      <input 
                        type="radio" 
                        name="rating" 
                        value={star}
                        checked={rating === star}
                        onChange={() => setRating(star)}
-                       className="mr-1 text-red-600 focus:ring-red-500 bg-white"
+                       className="mr-2 text-red-600 focus:ring-red-500 bg-white scale-125"
                      />
-                     <span className={rating >= star ? 'text-yellow-500 font-bold' : 'text-gray-300'}>{star}</span>
+                     <span className={`text-lg ${rating >= star ? 'text-yellow-500 font-bold' : 'text-gray-300'}`}>{star}</span>
                    </label>
                  ))}
                </div>
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Testo Recensione</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Cosa ha scritto?</label>
               <textarea 
                 required
-                className="w-full p-3 border border-slate-300 rounded-lg text-sm h-24 focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
-                placeholder="Incolla qui il testo della recensione..."
+                className="w-full p-3 border border-slate-300 rounded-lg text-sm h-32 focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-gray-900"
+                placeholder="Scrivi o incolla qui il testo della recensione..."
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
@@ -174,9 +175,9 @@ export const ManualEntry: React.FC<ManualEntryProps> = ({ onAddReview }) => {
 
             <button 
               type="submit"
-              className="w-full py-2 bg-red-800 hover:bg-red-900 text-white rounded-lg font-medium transition-colors shadow-sm"
+              className="w-full py-3 bg-red-800 hover:bg-red-900 text-white rounded-lg font-bold text-lg transition-colors shadow-sm"
             >
-              Aggiungi alla lista
+              Salva e Prepara Risposta
             </button>
           </form>
         </div>
